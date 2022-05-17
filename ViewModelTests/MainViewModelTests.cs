@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using ViewModel;
 using Xunit;
 
@@ -48,11 +49,58 @@ namespace ViewModelTests
             Assert.True(ter.WasError);
         }
 
+        [Fact]
+        public void ButtonWorkTest()
+        {
+            var mvm = new MainViewModel(null);
+            Assert.Null(mvm.md);
+            Assert.Null(mvm.sp);
+            Assert.Null(mvm.sd);
+            mvm.ApplyDataCommand.Execute(null);
+            mvm.SplineCommand.Execute(null);
+            Assert.NotNull(mvm.md);
+            Assert.NotNull(mvm.sp);
+            Assert.NotNull(mvm.sd);
+        }
+
+        [Fact]
+        public void UpdateTriggerTest1()
+        {
+            var ter = new TestErrorReporter();
+            var pcr = new PropertyChangedReporter();
+            var mvm = new MainViewModel(ter);
+            mvm.PropertyChanged += pcr.ChangeReport;
+            Assert.False(pcr.ChangeHappend);
+            mvm.ApplyDataCommand.Execute(null);
+            Assert.False(ter.WasError);
+            Assert.True(pcr.ChangeHappend);
+        }
+
+        [Fact]
+        public void UpdateTriggerTest2()
+        {
+            var ter = new TestErrorReporter();
+            var pcr = new PropertyChangedReporter();
+            var mvm = new MainViewModel(ter);
+            mvm.ApplyDataCommand.Execute(null);
+            mvm.PropertyChanged += pcr.ChangeReport;
+            Assert.False(pcr.ChangeHappend);
+            mvm.SplineCommand.Execute(null);
+            Assert.False(ter.WasError);
+            Assert.True(pcr.ChangeHappend);
+        }
 
         public class TestErrorReporter : IErrorReporter
         {
             public bool WasError { get; private set; }
             public void ReportError(string message) => WasError = true;
+        }
+
+        public class PropertyChangedReporter
+        {
+            public bool ChangeHappend { get; private set; }
+
+            public void ChangeReport(object sender, PropertyChangedEventArgs e) => ChangeHappend = true;
         }
     }
 }
